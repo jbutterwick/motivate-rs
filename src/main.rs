@@ -4,13 +4,13 @@ use std::time::SystemTime;
 use axum::extract::State;
 use rand::Rng;
 
-// Shared state that persists across requests
 #[derive(Clone)]
 struct AppState {
     quote_timestamps: Arc<Mutex<HashMap<String, SystemTime>>>,
 }
 
 async fn get_quote_handler(State(state): State<AppState>) -> String {
+    // next we'll turn this into a quote source so maybe we can build many sources of quotes
     let quote_list = [
         "Thick Goals will change you by achieving them",
         "You're doing this for you in 2 weeks",
@@ -52,8 +52,7 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
     let mut rng = rand::rng();
     let now = SystemTime::now();
     
-    // Try up to 5 times to find a quote that hasn't been used recently
-    for _ in 0..5 {
+    for _ in 0..10 {
         let random_index = rng.random_range(0..list_len);
         let random_quote = quote_list[random_index];
         
@@ -74,11 +73,10 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
         }
     }
     
-    // If no quote qualifies, return a random one anyway (fallback)
+    // If no quote qualifies, return a random one anyway as fallback
     let random_index = rng.random_range(0..list_len);
     let random_quote = quote_list[random_index];
     
-    // Update the timestamp
     let mut timestamps = state.quote_timestamps.lock().unwrap();
     timestamps.insert(random_quote.to_string(), now);
     
@@ -87,17 +85,15 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
 
 #[tokio::main]
 async fn main() {
-    // Initialize shared state
+    
     let app_state = AppState {
         quote_timestamps: Arc::new(Mutex::new(HashMap::new())),
     };
     
-    // Build our application with state
     let app = axum::Router::new()
         .route("/", axum::routing::get(get_quote_handler))
         .with_state(app_state);
     
-    // Run our app
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
