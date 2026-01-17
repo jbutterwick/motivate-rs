@@ -45,6 +45,7 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
         "Allow yourself to be proud of yourself and all the progress you've made",
         "Trust the seeds you are planting",
         "Do not wait to strike until the iron is hot. Make it hot by striking",
+        "Small deeds done are better than great deeds planned"
     ];
     
     let list_len = quote_list.len();
