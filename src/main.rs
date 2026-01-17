@@ -44,6 +44,7 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
         "The most effective way to do it is to do it",
         "Allow yourself to be proud of yourself and all the progress you've made",
         "Trust the seeds you are planting",
+        "Do not wait to strike until the iron is hot. Make it hot by striking",
     ];
     
     let list_len = quote_list.len();
