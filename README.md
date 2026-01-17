@@ -1,5 +1,5 @@
 # motivate-rs
-for when you need motiv ation - blazingly fast!
+for when you need motivation - blazingly fast!
 
 run with `cargo run`
 
