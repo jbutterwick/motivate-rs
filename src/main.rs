@@ -1,8 +1,8 @@
+use axum::extract::State;
+use rand::Rng;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
-use axum::extract::State;
-use rand::Rng;
 
 #[derive(Clone)]
 struct AppState {
@@ -45,55 +45,55 @@ async fn get_quote_handler(State(state): State<AppState>) -> String {
         "Allow yourself to be proud of yourself and all the progress you've made",
         "Trust the seeds you are planting",
         "Do not wait to strike until the iron is hot. Make it hot by striking",
-        "Small deeds done are better than great deeds planned"
+        "Small deeds done are better than great deeds planned",
     ];
-    
+
     let list_len = quote_list.len();
     let mut rng = rand::rng();
     let now = SystemTime::now();
-    
+
     for _ in 0..10 {
         let random_index = rng.random_range(0..list_len);
         let random_quote = quote_list[random_index];
-        
+
         // Lock the mutex to check/update state
         let mut timestamps = state.quote_timestamps.lock().unwrap();
-        
+
         if let Some(last_used) = timestamps.get(random_quote) {
             // Check if enough time has passed (5 minutes = 300 seconds)
             if let Ok(elapsed) = now.duration_since(*last_used)
-                && elapsed.as_secs() >= 300 {
-                    timestamps.insert(random_quote.to_string(), now);
-                    return random_quote.to_string();
-                }
+                && elapsed.as_secs() >= 300
+            {
+                timestamps.insert(random_quote.to_string(), now);
+                return random_quote.to_string();
+            }
         } else {
             // Quote has never been used
             timestamps.insert(random_quote.to_string(), now);
             return random_quote.to_string();
         }
     }
-    
+
     // If no quote qualifies, return a random one anyway as fallback
     let random_index = rng.random_range(0..list_len);
     let random_quote = quote_list[random_index];
-    
+
     let mut timestamps = state.quote_timestamps.lock().unwrap();
     timestamps.insert(random_quote.to_string(), now);
-    
+
     random_quote.to_string()
 }
 
 #[tokio::main]
 async fn main() {
-    
     let app_state = AppState {
         quote_timestamps: Arc::new(Mutex::new(HashMap::new())),
     };
-    
+
     let app = axum::Router::new()
         .route("/", axum::routing::get(get_quote_handler))
         .with_state(app_state);
-    
+
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
